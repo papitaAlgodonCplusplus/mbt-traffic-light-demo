@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semáforo Inteligente - Visualizador XState</title>
+    <script src="https://unpkg.com/xstate@5/dist/xstate.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        /* Semáforo visual */
+        .traffic-light {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            padding: 20px;
+            background: #2c3e50;
+            border-radius: 15px;
+            max-width: 150px;
+            margin: 0 auto;
+        }
+
+        .light {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #34495e;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .light.active {
+            box-shadow: 0 0 30px currentColor, inset 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        .light.green {
+            background: #2ecc71;
+        }
+
+        .light.yellow {
+            background: #f39c12;
+        }
+
+        .light.red {
+            background: #e74c3c;
+        }
+
+        .light.blinking {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Botones de control */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-pedestrian {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-pedestrian:hover {
+            background: #2980b9;
+        }
+
+        .btn-night {
+            background: #34495e;
+            color: white;
+        }
+
+        .btn-night:hover {
+            background: #2c3e50;
+        }
+
+        .btn-day {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-day:hover {
+            background: #e67e22;
+        }
+
+        .btn-reset {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #c0392b;
+        }
+
+        /* Estado actual */
+        .current-state {
+            text-align: center;
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .state-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+            text-transform: uppercase;
+        }
+
+        /* Información de contexto */
+        .context-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .info-item {
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            text-align: center;
+        }
+
+        .info-label {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .info-value.true {
+            color: #27ae60;
+        }
+
+        .info-value.false {
+            color: #c0392b;
+        }
+
+        /* Log de eventos */
+        #event-log {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+        }
+
+        .log-entry {
+            padding: 5px;
+            margin-bottom: 5px;
+            background: white;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+
+        .log-time {
+            color: #7f8c8d;
+            font-size: 0.75rem;
+        }
+
+        /* Indicador peatonal */
+        .pedestrian-indicator {
+            text-align: center;
+            padding: 15px;
+            background: #ecf0f1;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+
+        .pedestrian-icon {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .pedestrian-status {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚦 Semáforo Inteligente - Model-Based Testing</h1>
+            <p class="subtitle">
+                Implementación con XState | Universidad de Costa Rica - CI-0142 Pruebas de Software
+            </p>
+            <p class="subtitle">
+                Silvia Aguilar, Pablo Cascante, Javier Pupo, Alexander Quesada, Christian Rojas
+            </p>
+        </header>
+
+        <div class="main-grid">
+            <!-- Panel izquierdo: Visualización del semáforo -->
+            <div class="card">
+                <h2>🚦 Semáforo</h2>
+                <div class="traffic-light">
+                    <div class="light red" id="red-light"></div>
+                    <div class="light yellow" id="yellow-light"></div>
+                    <div class="light green" id="green-light"></div>
+                </div>
+
+                <div class="current-state">
+                    <div class="state-name" id="current-state">VERDE</div>
+                </div>
+
+                <div class="pedestrian-indicator">
+                    <div class="pedestrian-icon" id="pedestrian-icon">🚶</div>
+                    <div class="pedestrian-status" id="pedestrian-status">Espere</div>
+                </div>
+            </div>
+
+            <!-- Panel derecho: Controles -->
+            <div class="card">
+                <h2>🎮 Controles</h2>
+                <div class="controls">
+                    <button class="btn-pedestrian" onclick="sendEvent('PEDESTRIAN_BUTTON')">
+                        🚶 Botón Peatonal
+                    </button>
+                    <button class="btn-night" onclick="sendEvent('NIGHT_MODE')">
+                        🌙 Activar Modo Nocturno
+                    </button>
+                    <button class="btn-day" onclick="sendEvent('DAY_MODE')">
+                        ☀️ Activar Modo Diurno
+                    </button>
+                    <button class="btn-reset" onclick="resetMachine()">
+                        🔄 Reiniciar
+                    </button>
+                </div>
+
+                <h2 style="margin-top: 20px;">📊 Contexto</h2>
+                <div class="context-info">
+                    <div class="info-item">
+                        <div class="info-label">Botón Presionado</div>
+                        <div class="info-value" id="button-pressed">false</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Modo Nocturno</div>
+                        <div class="info-value" id="night-mode">false</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Peatones Esperando</div>
+                        <div class="info-value" id="pedestrian-count">0</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Ciclos Totales</div>
+                        <div class="info-value" id="total-cycles">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log de eventos -->
+        <div class="card">
+            <h2>📝 Log de Eventos</h2>
+            <div id="event-log"></div>
+        </div>
+    </div>
+
+    <script>
+        const { createMachine, interpret, assign } = XState;
+
+        // Definir la máquina de estados
+        const trafficLightMachine = createMachine({
+            id: 'trafficLight',
+            initial: 'verde',
+            context: {
+                buttonPressed: false,
+                nightMode: false,
+                pedestrianWaitingCount: 0,
+                totalCycles: 0
+            },
+            states: {
+                verde: {
+                    entry: assign({
+                        totalCycles: (context) => context.totalCycles + 1
+                    }),
+                    on: {
+                        PEDESTRIAN_BUTTON: {
+                            actions: assign({
+                                buttonPressed: true,
+                                pedestrianWaitingCount: (context) => context.pedestrianWaitingCount + 1
+                            })
+                        },
+                        NIGHT_MODE: {
+                            target: 'intermitente',
+                            actions: assign({
+                                nightMode: true,
+                                buttonPressed: false
+                            })
+                        }
+                    },
+                    after: {
+                        3000: [
+                            { target: 'amarillo', cond: (context) => context.buttonPressed },
+                            { target: 'verde', internal: true }
+                        ]
+                    }
+                },
+                amarillo: {
+                    on: {
+                        NIGHT_MODE: {
+                            target: 'intermitente',
+                            actions: assign({
+                                nightMode: true,
+                                buttonPressed: false
+                            })
+                        }
+                    },
+                    after: {
+                        1000: 'rojo'
+                    }
+                },
+                rojo: {
+                    on: {
+                        NIGHT_MODE: {
+                            target: 'intermitente',
+                            actions: assign({
+                                nightMode: true,
+                                buttonPressed: false
+                            })
+                        }
+                    },
+                    after: {
+                        3000: [
+                            {
+                                target: 'peatonal',
+                                cond: (context) => context.buttonPressed,
+                                actions: assign({ buttonPressed: false })
+                            },
+                            { target: 'verde' }
+                        ]
+                    }
+                },
+                peatonal: {
+                    on: {
+                        NIGHT_MODE: {
+                            target: 'intermitente',
+                            actions: assign({ nightMode: true })
+                        }
+                    },
+                    after: {
+                        5000: 'rojo'
+                    }
+                },
+                intermitente: {
+                    entry: assign({ buttonPressed: false }),
+                    on: {
+                        DAY_MODE: {
+                            target: 'verde',
+                            actions: assign({ nightMode: false })
+                        }
+                    }
+                }
+            }
+        });
+
+        // Iniciar el servicio
+        const service = interpret(trafficLightMachine)
+            .onTransition((state) => {
+                updateUI(state);
+                logEvent('Transición', `Estado: ${state.value}`);
+            })
+            .start();
+
+        // Actualizar UI
+        function updateUI(state) {
+            const stateName = state.value;
+            const context = state.context;
+
+            // Actualizar nombre del estado
+            document.getElementById('current-state').textContent = stateName.toUpperCase();
+
+            // Actualizar luces
+            updateLights(stateName);
+
+            // Actualizar contexto
+            document.getElementById('button-pressed').textContent = context.buttonPressed;
+            document.getElementById('button-pressed').className = `info-value ${context.buttonPressed}`;
+
+            document.getElementById('night-mode').textContent = context.nightMode;
+            document.getElementById('night-mode').className = `info-value ${context.nightMode}`;
+
+            document.getElementById('pedestrian-count').textContent = context.pedestrianWaitingCount;
+            document.getElementById('total-cycles').textContent = context.totalCycles;
+
+            // Actualizar indicador peatonal
+            updatePedestrianIndicator(stateName);
+        }
+
+        function updateLights(state) {
+            const red = document.getElementById('red-light');
+            const yellow = document.getElementById('yellow-light');
+            const green = document.getElementById('green-light');
+
+            // Resetear todas las luces
+            [red, yellow, green].forEach(light => {
+                light.classList.remove('active', 'blinking');
+            });
+
+            // Activar la luz correspondiente
+            switch(state) {
+                case 'verde':
+                    green.classList.add('active');
+                    break;
+                case 'amarillo':
+                    yellow.classList.add('active');
+                    break;
+                case 'rojo':
+                case 'peatonal':
+                    red.classList.add('active');
+                    break;
+                case 'intermitente':
+                    yellow.classList.add('active', 'blinking');
+                    break;
+            }
+        }
+
+        function updatePedestrianIndicator(state) {
+            const icon = document.getElementById('pedestrian-icon');
+            const status = document.getElementById('pedestrian-status');
+
+            if (state === 'peatonal') {
+                icon.textContent = '🚶‍♂️🚶‍♀️';
+                status.textContent = '¡Puede cruzar!';
+                status.style.color = '#27ae60';
+            } else {
+                icon.textContent = '🚶';
+                status.textContent = 'Espere';
+                status.style.color = '#c0392b';
+            }
+        }
+
+        function sendEvent(eventName) {
+            service.send(eventName);
+            logEvent('Evento enviado', eventName);
+        }
+
+        function resetMachine() {
+            service.stop();
+            service.start();
+            document.getElementById('event-log').innerHTML = '';
+            logEvent('Sistema', 'Máquina reiniciada');
+        }
+
+        function logEvent(type, message) {
+            const log = document.getElementById('event-log');
+            const now = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${now}]</span> <strong>${type}:</strong> ${message}`;
+            log.insertBefore(entry, log.firstChild);
+
+            // Limitar a 50 entradas
+            while (log.children.length > 50) {
+                log.removeChild(log.lastChild);
+            }
+        }
+
+        // Inicializar UI
+        updateUI(service.getSnapshot());
+        logEvent('Sistema', 'Visualizador iniciado');
+    </script>
+</body>
+</html>

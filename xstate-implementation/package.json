@@ -1,0 +1,75 @@
+{
+  "name": "traffic-light-xstate",
+  "version": "1.0.0",
+  "description": "Implementación de semáforo inteligente con Model-Based Testing usando XState",
+  "main": "src/trafficLightMachine.js",
+  "type": "module",
+  "scripts": {
+    "test": "jest --coverage --verbose",
+    "test:watch": "jest --watch",
+    "visualize": "node visualize.js",
+    "start": "node src/trafficLightMachine.js"
+  },
+  "keywords": [
+    "xstate",
+    "model-based-testing",
+    "state-machine",
+    "traffic-light",
+    "finite-state-machine"
+  ],
+  "authors": [
+    "Silvia Aguilar B80129",
+    "Pablo Cascante C11731",
+    "Javier Pupo C06103",
+    "Alexander Quesada C16131",
+    "Christian Rojas B86958"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "xstate": "^5.18.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.4",
+    "@types/jest": "^29.5.13",
+    "@xstate/test": "^1.0.0",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {
+      "^.+\\.js$": "babel-jest"
+    },
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/**/*.test.js"
+    ],
+    "coverageReporters": [
+      "text",
+      "html",
+      "lcov"
+    ],
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/?(*.)+(spec|test).js"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "json"
+    ],
+    "verbose": true
+  },
+  "babel": {
+    "presets": [
+      [
+        "@babel/preset-env",
+        {
+          "targets": {
+            "node": "current"
+          }
+        }
+      ]
+    ]
+  }
+}
