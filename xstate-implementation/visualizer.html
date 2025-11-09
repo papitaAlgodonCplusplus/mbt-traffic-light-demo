@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Semáforo Inteligente - Visualizador XState</title>
-    <script src="https://unpkg.com/xstate@5/dist/xstate.js"></script>
+    <script src="https://unpkg.com/xstate@4/dist/xstate.js"></script>
     <style>
         * {
             margin: 0;
@@ -352,7 +352,10 @@
     <script>
         const { createMachine, interpret, assign } = XState;
 
-        // Definir la máquina de estados
+        // Declarar service al inicio para evitar temporal dead zone
+        let service;
+
+        // Definir la máquina de estados (XState v4 syntax)
         const trafficLightMachine = createMachine({
             id: 'trafficLight',
             initial: 'verde',
@@ -384,7 +387,10 @@
                     },
                     after: {
                         3000: [
-                            { target: 'amarillo', cond: (context) => context.buttonPressed },
+                            {
+                                target: 'amarillo',
+                                cond: (context) => context.buttonPressed
+                            },
                             { target: 'verde', internal: true }
                         ]
                     }
@@ -447,8 +453,8 @@
             }
         });
 
-        // Iniciar el servicio
-        const service = interpret(trafficLightMachine)
+        // Iniciar el servicio (XState v4 usa interpret)
+        service = interpret(trafficLightMachine)
             .onTransition((state) => {
                 updateUI(state);
                 logEvent('Transición', `Estado: ${state.value}`);
@@ -530,7 +536,14 @@
 
         function resetMachine() {
             service.stop();
-            service.start();
+            // Recrear el servicio con XState v4
+            service = interpret(trafficLightMachine)
+                .onTransition((state) => {
+                    updateUI(state);
+                    logEvent('Transición', `Estado: ${state.value}`);
+                })
+                .start();
+
             document.getElementById('event-log').innerHTML = '';
             logEvent('Sistema', 'Máquina reiniciada');
         }

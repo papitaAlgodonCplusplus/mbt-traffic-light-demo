@@ -7,7 +7,12 @@
       "Bash(java -version:*)",
       "Bash(cmd /c run-tests.bat:*)",
       "Bash(del libmodeljunit-2.5.jar)",
-      "Bash(cmd /c \"del lib\\modeljunit-2.5.jar 2>nul && echo Deleted\")"
+      "Bash(cmd /c \"del lib\\modeljunit-2.5.jar 2>nul && echo Deleted\")",
+      "Bash(mkdir:*)",
+      "Bash(mv:*)",
+      "Bash(./mvnw.cmd clean test)",
+      "Bash(./mvnw.cmd test:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

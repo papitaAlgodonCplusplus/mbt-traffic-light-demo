@@ -113,7 +113,7 @@ Como pueden ver, usamos anotaciones:
 
 Ahora ejecutemos las pruebas...
 
-[EJECUTAR: mvn test]
+[EJECUTAR:  run-tests.bat]
 ```
 
 **Mientras se ejecutan las pruebas, explicar:**

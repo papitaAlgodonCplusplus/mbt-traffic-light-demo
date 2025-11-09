@@ -29,12 +29,12 @@ export const trafficLightMachine = createMachine({
   initial: 'verde',
 
   // Contexto: datos compartidos entre estados
-  context: {
+  context: () => ({
     buttonPressed: false,
     nightMode: false,
     pedestrianWaitingCount: 0,
     totalCycles: 0
-  },
+  }),
 
   // Definición de estados
   states: {
@@ -43,7 +43,7 @@ export const trafficLightMachine = createMachine({
      */
     verde: {
       entry: assign({
-        totalCycles: (context) => context.totalCycles + 1
+        totalCycles: ({ context }) => context.totalCycles + 1
       }),
 
       on: {
@@ -51,7 +51,7 @@ export const trafficLightMachine = createMachine({
         PEDESTRIAN_BUTTON: {
           actions: assign({
             buttonPressed: true,
-            pedestrianWaitingCount: (context) => context.pedestrianWaitingCount + 1
+            pedestrianWaitingCount: ({ context }) => context.pedestrianWaitingCount + 1
           })
         },
 
@@ -71,12 +71,12 @@ export const trafficLightMachine = createMachine({
           // Si el botón fue presionado, ir a amarillo
           {
             target: 'amarillo',
-            cond: (context) => context.buttonPressed
+            guard: ({ context }) => context.buttonPressed
           },
           // Sino, permanecer en verde (reiniciar timer)
           {
             target: 'verde',
-            internal: true
+            reenter: true
           }
         ]
       }
@@ -121,7 +121,7 @@ export const trafficLightMachine = createMachine({
           // Si había solicitud peatonal, dar paso peatonal
           {
             target: 'peatonal',
-            cond: (context) => context.buttonPressed,
+            guard: ({ context }) => context.buttonPressed,
             actions: assign({
               buttonPressed: false
             })
@@ -176,14 +176,14 @@ export const trafficLightMachine = createMachine({
 }, {
   // Acciones definidas (implementaciones)
   actions: {
-    notifyPedestrianCrossing: (context, event) => {
+    notifyPedestrianCrossing: ({ context, event }) => {
       console.log('🚶 Peatones cruzando - Luz verde peatonal');
     }
   },
 
   // Guardas (condiciones) definidas
   guards: {
-    buttonWasPressed: (context) => context.buttonPressed
+    buttonWasPressed: ({ context }) => context.buttonPressed
   }
 });
 
